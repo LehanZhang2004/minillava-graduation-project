@@ -1,0 +1,705 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mini-LLaVA 智能视觉对话系统｜毕业设计展示</title>
+  <meta name="description" content="Mini-LLaVA 智能视觉对话系统" />
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+  <div class="progress" id="progress"></div>
+
+  <aside class="toc" aria-label="页面导航">
+    <div class="toc__brand">
+      <span class="brand-dot"></span>
+      <span>Mini-LLaVA</span>
+    </div>
+    <a href="#cover">首页</a>
+    <a href="#overview">项目概览</a>
+    <a href="#architecture">系统架构</a>
+    <a href="#dataflow">数据处理</a>
+    <a href="#roadmap">训练路线</a>
+    <a href="#stage1">Stage 1</a>
+    <a href="#stage2">Stage 2</a>
+    <a href="#stage3">Stage 3</a>
+    <a href="#innovation">创新点</a>
+    <a href="#inference">推理流程</a>
+    <a href="#deployment">系统部署</a>
+    <a href="#testing">功能测试</a>
+    <a href="#results">实验结果</a>
+  </aside>
+
+  <main class="deck" id="deck">
+    <!-- 01 Cover -->
+    <section class="slide cover" id="cover">
+      <div class="slide__inner cover-grid">
+        <div>
+          <p class="eyebrow">2026 届本科毕业论文（设计）动态展示网站</p>
+          <h1>Mini-LLaVA 智能视觉对话系统的设计与实现</h1>
+          <p class="subtitle">Design and Implementation of Mini-LLaVA Intelligent Interaction System</p>
+          <div class="meta-row">
+            <span>答辩人：张乐涵</span>
+            <span>指导教师：智冬晓</span>
+          </div>
+          <div class="hero-actions">
+            <a class="btn primary" href="#roadmap">查看三阶段实验路线</a>
+            <a class="btn ghost" href="#deployment">查看系统部署方案</a>
+          </div>
+        </div>
+        <div class="hero-card" aria-hidden="true">
+          <div class="terminal-bar"><span></span><span></span><span></span></div>
+          <div class="terminal-lines">
+            <p><b>CLIP</b> vision encoder</p>
+            <p><b>MLP Projection</b> cross-modal alignment</p>
+            <p><b>Qwen3-1.7B</b> language model</p>
+            <p><b>LoRA</b> persona adaptation</p>
+            <p><b>Gradio</b> web interaction</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 02 Overview -->
+    <section class="slide" id="overview">
+      <div class="slide__inner">
+        <p class="eyebrow">01 / Project Overview</p>
+        <h2>项目目标与问题背景</h2>
+        <div class="overview-layout">
+          <div class="card large overview-main">
+            <h3>课题背景</h3>
+            <p>传统图像识别系统通常只能输出类别、标签或固定格式的检测结果，难以支持用户围绕同一张图片进行自然语言追问。随着大语言模型的发展，视觉信息需要被转化为语言模型可理解的上下文，才能形成“看图、理解、回答、追问”的完整交互链路。</p>
+            <p>本课题围绕轻量级多模态大模型展开，目标是在有限训练资源下，将 CLIP 的视觉表征能力与 Qwen3-1.7B 的语言生成能力连接起来，并进一步通过指令微调和 LoRA 适配，使系统具备图像描述、视觉问答、多轮对话和风格化回复能力。</p>
+          </div>
+          <div class="card large accent-card">
+            <h3>研究目标</h3>
+            <p class="quote">完成一个从模型训练到 Web 部署的 Mini-LLaVA 智能视觉对话系统，证明轻量架构也能够实现可演示、可交互、可扩展的多模态应用闭环。</p>
+          </div>
+        </div>
+        <div class="overview-grid">
+          <article>
+            <b>问题 1：视觉特征接入语言模型</b>
+            <span>CLIP 输出的是视觉 token，Qwen3 接收的是语言嵌入。系统通过 MLP Projection 将 768 维视觉特征映射到语言模型隐藏空间，解决跨模态对齐问题。</span>
+          </article>
+          <article>
+            <b>问题 2：从图像描述到指令问答</b>
+            <span>单纯 caption 训练只能让模型描述图片。Stage 2 使用单轮和多轮图文对话数据，使模型学习根据用户问题组织回答。</span>
+          </article>
+          <article>
+            <b>问题 3：系统演示与部署落地</b>
+            <span>训练得到的权重需要被加载到可访问的交互界面中。系统使用 Gradio 封装推理流程，支持图片上传、对话历史、人格切换和移动端访问。</span>
+          </article>
+        </div>
+        <div class="two-col">
+          <div class="card">
+            <h3>系统范围</h3>
+            <p>本设计覆盖数据处理、模型结构、三阶段训练、推理封装、Web 交互和功能测试，不只停留在模型训练脚本层面。</p>
+            <ul class="check-list">
+              <li>模型侧：实现 CLIP 视觉编码、MLP 跨模态投影、Qwen3-1.7B 语言生成的组合。</li>
+              <li>训练侧：通过 Stage 1、Stage 2、Stage 3 逐步获得描述、问答、风格化交互能力。</li>
+              <li>系统侧：将训练权重加载到 Gradio Web 服务，支持图片上传、自然语言提问、多轮历史和移动端扫码。</li>
+              <li>展示侧：用网页将实验路线、关键代码、结果指标和部署方式完整串联。</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>预期能力</h3>
+            <ul class="check-list">
+              <li>图像描述：用户只上传图片时，系统自动生成图像内容说明。</li>
+              <li>视觉问答：用户可以围绕主体、场景、动作和细节进行提问。</li>
+              <li>多轮追问：同一张图像下保留历史上下文，支持连续对话。</li>
+              <li>风格切换：通过 LoRA adapter 在默认助手和不同人格风格之间切换。</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 03 Architecture -->
+    <section class="slide" id="architecture">
+      <div class="slide__inner">
+        <p class="eyebrow">02 / System Architecture</p>
+        <h2>系统总体架构</h2>
+        <div class="architecture-map">
+          <div class="layer user-layer">
+            <span class="layer-name">交互层</span>
+            <div class="arch-card">
+              <b>用户输入</b>
+              <small>图片上传 / 摄像头拍摄 / 文本提问 / 多轮追问</small>
+            </div>
+            <div class="arch-card">
+              <b>Gradio Web</b>
+              <small>聊天窗口、人格下拉框、二维码移动端访问</small>
+            </div>
+          </div>
+          <div class="layer model-layer">
+            <span class="layer-name">模型层</span>
+            <div class="arch-card">
+              <b>CLIP ViT-B/16</b>
+              <small>输出 197 个视觉 token，保留图像空间信息</small>
+            </div>
+            <div class="arch-card highlight">
+              <b>MLP Projection</b>
+              <small>Linear → GELU → Linear，将 768 维视觉特征映射到 Qwen3 嵌入空间</small>
+            </div>
+            <div class="arch-card">
+              <b>Qwen3-1.7B</b>
+              <small>接收视觉嵌入、用户问题和历史对话，自回归生成回答</small>
+            </div>
+          </div>
+          <div class="layer train-layer">
+            <span class="layer-name">训练层</span>
+            <div class="arch-card">
+              <b>Stage 1</b>
+              <small>冻结 CLIP + LLM，只训练 Projection，建立模态对齐</small>
+            </div>
+            <div class="arch-card">
+              <b>Stage 2</b>
+              <small>加载 Projection，训练 Projection + LLM，获得视觉问答和多轮能力</small>
+            </div>
+            <div class="arch-card">
+              <b>Stage 3</b>
+              <small>注入 LoRA adapter，低成本扩展不同回复风格</small>
+            </div>
+          </div>
+        </div>
+        <div class="note-box">
+          <b>设计思路：</b>CLIP 负责把图像转成视觉特征，Projection 负责把视觉特征转换到语言模型能理解的向量空间，Qwen3-1.7B 负责结合问题与历史上下文生成自然语言回答。
+        </div>
+      </div>
+    </section>
+
+    <!-- 04 Dataflow -->
+    <section class="slide" id="dataflow">
+      <div class="slide__inner">
+        <p class="eyebrow">03 / Data Processing</p>
+        <h2>实验数据处理流程</h2>
+        <div class="two-col">
+          <div class="card">
+            <h3>图像处理流水线</h3>
+            <p>训练和推理使用同一套 CLIP 标准预处理，保证输入分布一致。</p>
+            <div class="process-chain">
+              <span>Resize 224</span>
+              <span>CenterCrop</span>
+              <span>ToTensor</span>
+              <span>Normalize</span>
+              <span>[3,224,224]</span>
+            </div>
+            <ul class="check-list compact">
+              <li>Stage 1 从 SA1B-Dense-Caption 的 URL 下载图像，失败自动重试并跳过异常样本。</li>
+              <li>Stage 2 从 CogVLM-SFT-311K 本地图片与 JSON 标签读取单轮、多轮对话。</li>
+              <li>Stage 3 读取蒸馏后的风格 JSON，并复用 Stage 2 的多轮对话构造方式。</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>文本监督策略</h3>
+            <p>训练不是让模型预测所有输入 token，而是只监督 assistant 需要回答的部分。</p>
+            <div class="mask-demo">
+              <span class="masked">visual tokens: -100</span>
+              <span class="masked">user prompt: -100</span>
+              <span class="learned">assistant answer: loss</span>
+            </div>
+            <p class="hint">这样模型会学习“看图后如何回答”，而不会把用户问题或视觉 token 当作需要复述的目标。</p>
+          </div>
+        </div>
+        <div class="detail-grid">
+          <article><b>图像预处理一致性</b><span>CLIP 训练时使用固定的 224×224 输入和归一化参数。训练和推理保持同一预处理，可以减少视觉特征分布漂移，让 Projection 学到的映射关系更稳定。</span></article>
+          <article><b>监督目标设定</b><span>用户问题是条件，assistant 回复才是生成目标。将 user 轮、视觉 token 和 padding 位置设为 -100 后，loss 会集中反映模型回答能力。</span></article>
+          <article><b>多轮编码方式</b><span>Qwen3 的 chat template 和 BPE 分词依赖上下文边界。完整前缀编码后再取新增 token，可避免逐轮拼接造成 input_ids 与 labels 错位。</span></article>
+        </div>
+      </div>
+    </section>
+
+    <!-- 04 Roadmap -->
+    <section class="slide" id="roadmap">
+      <div class="slide__inner">
+        <p class="eyebrow">04 / Experimental Roadmap</p>
+        <h2>三阶段训练路线与能力递进</h2>
+        <div class="timeline">
+          <article class="timeline-card">
+            <span class="stage-label">Stage 1</span>
+            <h3>模态对齐</h3>
+            <p>冻结 CLIP 和 Qwen3，仅训练 MLP Projection，使图像特征进入语言模型语义空间。</p>
+            <strong>阶段产物：stage1_projection_best.pt</strong>
+          </article>
+          <article class="timeline-card">
+            <span class="stage-label">Stage 2</span>
+            <h3>多模态指令微调</h3>
+            <p>加载 Stage 1 Projection，使用图像问答和多轮对话数据训练，使模型学会按用户指令回答。</p>
+            <strong>阶段产物：stage2_llava_best.pt</strong>
+          </article>
+          <article class="timeline-card">
+            <span class="stage-label">Stage 3</span>
+            <h3>LoRA 人格适配</h3>
+            <p>基于 Stage 2 权重注入 LoRA，冻结视觉与投影模块，仅训练少量风格适配参数。</p>
+            <strong>阶段产物：lora adapter 目录</strong>
+          </article>
+        </div>
+        <div class="note-box">
+          <b>递进关系：</b>Stage 1 解决“图像特征能不能接到语言模型上”，Stage 2 解决“模型能不能按问题回答图像内容”，Stage 3 解决“系统能不能在同一视觉理解能力上切换表达风格”。
+        </div>
+      </div>
+    </section>
+
+    <!-- 05 Stage 1 -->
+    <section class="slide" id="stage1">
+      <div class="slide__inner">
+        <p class="eyebrow">05 / Stage 1 Modality Alignment</p>
+        <h2>Stage 1：模态对齐训练</h2>
+        <div class="two-col">
+          <div class="card">
+            <h3>训练目的</h3>
+            <p>让 CLIP 输出的视觉特征能够被 Qwen3-1.7B 语言模型理解，解决“图像向量不能直接进入语言模型”的问题。</p>
+            <div class="mini-flow">
+              <span>图像</span><span>CLIP</span><span>Projection</span><span>Qwen3</span><span>Caption</span>
+            </div>
+          </div>
+          <div class="card">
+            <h3>关键做法</h3>
+            <ul class="check-list compact">
+              <li>数据：SA1B-Dense-Caption，训练集前 100000 条。</li>
+              <li>冻结：CLIP 视觉编码器、Qwen3 LLM。</li>
+              <li>训练：仅更新 MLP Projection。</li>
+              <li>输入格式：随机指令“描述这张图片” + 图像 Caption。</li>
+              <li>损失计算：只监督 assistant 回复部分，padding 使用 -100 忽略。</li>
+            </ul>
+          </div>
+        </div>
+        <div class="readable-diagram stage-diagram">
+          <div class="diagram-node"><b>SA1B 图片</b><span>URL 下载图片，转换为 RGB</span></div>
+          <div class="diagram-node"><b>CLIP 视觉编码</b><span>[B, 3, 224, 224] → [B, 197, 768]</span></div>
+          <div class="diagram-node accent"><b>MLP Projection</b><span>唯一可训练模块，768 → 1024</span></div>
+          <div class="diagram-node"><b>Qwen3-1.7B</b><span>冻结语言模型，只接收拼接后的 embeds</span></div>
+          <div class="diagram-node result"><b>Caption Loss</b><span>只监督 assistant 的图像描述文本</span></div>
+        </div>
+        <div class="metrics-grid">
+          <div class="metric"><span>Batch Size</span><b data-count="16">0</b></div>
+          <div class="metric"><span>Learning Rate</span><b>2e-3</b></div>
+          <div class="metric"><span>Max Text Len</span><b data-count="128">0</b></div>
+          <div class="metric"><span>Final Eval Loss</span><b data-count="1.5723">0</b></div>
+          <div class="metric"><span>Final Eval PPL</span><b data-count="4.8177">0</b></div>
+        </div>
+        <div class="detail-grid">
+          <article><b>阶段输入</b><span>图像 + “描述这张图片”指令 + SA1B 全局 caption。</span></article>
+          <article><b>阶段输出</b><span>保存 <code>stage1_projection_best.pt</code>，作为 Stage 2 的跨模态初始化权重。</span></article>
+          <article><b>判断标准</b><span>通过 Eval Loss / PPL 观察 Projection 是否稳定学到图像语义到语言空间的映射。</span></article>
+        </div>
+      </div>
+    </section>
+
+    <!-- 06 Stage 1 Implementation -->
+    <section class="slide" id="stage1-code">
+      <div class="slide__inner">
+        <p class="eyebrow">06 / Stage 1 Implementation</p>
+        <h2>Stage 1 的代码逻辑</h2>
+        <div class="code-layout">
+          <pre><code># Stage 1 核心策略
+model = LlavaForCausalLM(CLIP_PATH, LLM_PATH)
+
+# 冻结视觉编码器和语言模型
+for p in model.vision_tower.parameters():
+    p.requires_grad = False
+for p in model.llm.parameters():
+    p.requires_grad = False
+
+# 仅训练 Projection
+loss = model(pixel_values, input_ids, labels)
+loss.backward()
+optimizer.step()
+
+# 根据 eval/ppl 保存最优 Projection 权重
+if eval_ppl < best_eval_ppl:
+    torch.save(model.projection.state_dict(),
+               "stage1_projection_best.pt")</code></pre>
+          <div class="card">
+            <h3>Projection 单独训练策略</h3>
+            <p>CLIP 和 Qwen3 已具备较强的视觉表征与语言生成能力。Stage 1 的主要矛盾不是重新学习视觉或语言，而是建立视觉特征到语言嵌入空间的连接，因此只训练中间投影层更稳定，也更节省显存。</p>
+            <ul class="check-list compact">
+              <li>CLIP 输出保留 197 个 token，包含 CLS 和 14×14 patch 空间信息。</li>
+              <li>Projection 使用 Linear → GELU → Linear，将 768 维映射到 Qwen3 hidden size。</li>
+              <li>视觉 token 前置拼接到文本 embedding 前，视觉位置 label 全部设为 -100。</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 07 Stage 2 -->
+    <section class="slide" id="stage2">
+      <div class="slide__inner">
+        <p class="eyebrow">07 / Stage 2 Instruction Tuning</p>
+        <h2>Stage 2：多模态指令微调</h2>
+        <div class="two-col">
+          <div class="card">
+            <h3>训练目的</h3>
+            <p>让模型从“能够描述图像”进一步变成“能够围绕图像回答用户问题”，支撑视觉问答、多轮对话和更真实的交互场景。</p>
+            <ul class="check-list compact">
+              <li>加载 Stage 1 训练得到的 Projection 权重。</li>
+              <li>冻结 CLIP，训练 Projection + Qwen3 LLM，强化图文条件下的回答能力。</li>
+              <li>使用 CogVLM-SFT-311K 中的单轮与多轮对话数据，固定随机种子划分 2% 评估集。</li>
+              <li>通过完整前缀编码再取差值，避免 BPE 分词边界导致 labels 错位。</li>
+              <li>使用梯度裁剪 max_norm=1.0，降低全参数微调时的训练不稳定风险。</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>实验指标</h3>
+            <div class="bar-chart" aria-label="Stage 2 实验指标示意图">
+              <div class="bar-row"><span>Eval Loss</span><i style="--w: 72%"></i><b>≈ 2.0270</b></div>
+              <div class="bar-row"><span>Eval PPL</span><i style="--w: 86%"></i><b>≈ 7.5912</b></div>
+            </div>
+            <p class="hint">Stage 2 的任务更开放、更接近真实问答，因此 loss / ppl 高于单一图像描述阶段属于合理现象，重点在于回答形式更适配交互需求。</p>
+          </div>
+        </div>
+        <div class="metrics-grid four">
+          <div class="metric"><span>Batch Size</span><b data-count="4">0</b></div>
+          <div class="metric"><span>Learning Rate</span><b>2e-5</b></div>
+          <div class="metric"><span>Max Text Len</span><b data-count="512">0</b></div>
+          <div class="metric"><span>Eval Ratio</span><b>2%</b></div>
+        </div>
+        <div class="readable-diagram stage-diagram wide">
+          <div class="diagram-node"><b>CogVLM-SFT-311K</b><span>单轮问答 + 多轮对话，按固定随机种子划分训练/评估</span></div>
+          <div class="diagram-node"><b>加载 Stage 1</b><span>Projection 使用已对齐权重，不从随机状态开始</span></div>
+          <div class="diagram-node accent"><b>训练 Projection + LLM</b><span>CLIP 冻结，语言模型参与图文指令学习</span></div>
+          <div class="diagram-node"><b>多轮 Label Mask</b><span>user 轮为 -100，assistant 轮计算 loss</span></div>
+          <div class="diagram-node result"><b>stage2_llava_best.pt</b><span>部署阶段加载的通用多模态模型权重</span></div>
+        </div>
+        <div class="detail-grid">
+          <article><b>能力变化</b><span>从“给图片生成描述”升级为“根据用户问题理解图片并回答”。</span></article>
+          <article><b>样本组织</b><span>每条样本包含图片路径和 conversations 列表，能够覆盖单轮与多轮场景。</span></article>
+          <article><b>训练保护</b><span>使用 bf16 混合精度、梯度检查点和梯度裁剪，降低显存压力和训练震荡。</span></article>
+        </div>
+      </div>
+    </section>
+
+    <!-- 08 Stage 2 Implementation -->
+    <section class="slide" id="stage2-code">
+      <div class="slide__inner">
+        <p class="eyebrow">08 / Stage 2 Implementation</p>
+        <h2>Stage 2 的数据组织与训练逻辑</h2>
+        <div class="code-layout">
+          <pre><code># 加载 Stage 1 Projection
+proj_state = torch.load(PROJECTION_PATH, map_location="cpu")
+model.projection.load_state_dict(proj_state)
+
+# Stage 2：冻结 CLIP，训练 Projection + LLM
+for p in model.vision_tower.parameters():
+    p.requires_grad = False
+
+# 多轮对话样本构造
+input_ids, labels = build_conversation_ids(
+    conversations=sample["conversations"],
+    tokenizer=tokenizer,
+    max_len=512,
+)
+
+# 保存完整模型权重
+if eval_loss < best_eval_loss:
+    torch.save(model.state_dict(), "stage2_llava_best.pt")</code></pre>
+          <div class="card">
+            <h3>训练效果与系统能力映射</h3>
+            <p>Stage 2 使模型学习“图像 + 用户问题 + 历史对话 → assistant 回复”的格式，因此它直接支撑网页端的视觉问答、多轮追问和上下文连贯回答。</p>
+            <ul class="check-list compact">
+              <li>单轮样本提升基础视觉问答能力。</li>
+              <li>多轮样本让模型适应同一图像下的连续追问。</li>
+              <li>保存完整 state_dict，便于后续部署时一次性恢复 Projection 与 LLM 权重。</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 09 Stage 3 -->
+    <section class="slide" id="stage3">
+      <div class="slide__inner">
+        <p class="eyebrow">09 / Stage 3 LoRA Persona Adaptation</p>
+        <h2>Stage 3：LoRA 人格适配</h2>
+        <div class="two-col">
+          <div class="card">
+            <h3>训练目的</h3>
+            <p>在不重新训练完整模型的情况下，让同一个 Mini-LLaVA 具备不同回复风格，从而增强系统展示的趣味性和辨识度。</p>
+            <ul class="check-list compact">
+              <li>加载 Stage 2 通用多模态权重。</li>
+              <li>冻结 vision_tower 与 projection。</li>
+              <li>对 Qwen3 的注意力和 MLP 层注入 LoRA。</li>
+              <li>使用蒸馏后的风格 JSON 训练 adapter，通过不同 adapter 实现“默认助手 / 霸道总裁 / 中二少年”等模式切换。</li>
+            </ul>
+          </div>
+          <div class="persona-card">
+            <div class="persona-tabs">
+              <button class="tab-btn active" data-persona="default">默认助手</button>
+              <button class="tab-btn" data-persona="boss">霸道总裁</button>
+              <button class="tab-btn" data-persona="teen">中二少年</button>
+            </div>
+            <div class="persona-text" id="personaText">回答风格客观、简洁、专业，适合常规图像描述和视觉问答。</div>
+          </div>
+        </div>
+        <div class="metrics-grid four">
+          <div class="metric"><span>LoRA Rank</span><b data-count="16">0</b></div>
+          <div class="metric"><span>LoRA Alpha</span><b data-count="32">0</b></div>
+          <div class="metric"><span>Dropout</span><b>0.05</b></div>
+          <div class="metric"><span>Epochs</span><b data-count="5">0</b></div>
+        </div>
+        <div class="readable-diagram lora-diagram">
+          <div class="diagram-node"><b>Stage 2 基座</b><span>保留通用视觉问答能力</span></div>
+          <div class="diagram-node accent"><b>LoRA 注入</b><span>q/k/v/o + gate/up/down projection</span></div>
+          <div class="diagram-node"><b>风格数据</b><span>不同 JSON 数据训练不同 adapter</span></div>
+          <div class="diagram-node result"><b>动态切换</b><span>set_adapter / disable_adapters 控制回复风格</span></div>
+        </div>
+        <div class="note-box">
+          <b>实验定位：</b>Stage 3 的目标不是重新学习视觉识别，而是在 Stage 2 已具备的图文问答能力上，使用参数高效微调扩展表达风格，因此适合答辩现场做同图同问的对比演示。
+        </div>
+      </div>
+    </section>
+
+    <!-- 10 LoRA Code -->
+    <section class="slide" id="stage3-code">
+      <div class="slide__inner">
+        <p class="eyebrow">10 / LoRA Implementation</p>
+        <h2>LoRA 的参数高效微调逻辑</h2>
+        <div class="code-layout">
+          <pre><code>lora_config = LoraConfig(
+    r=16,
+    lora_alpha=32,
+    target_modules=[
+        "q_proj", "k_proj", "v_proj", "o_proj",
+        "gate_proj", "up_proj", "down_proj"
+    ],
+    lora_dropout=0.05,
+    bias="none",
+    task_type="CAUSAL_LM"
+)
+
+model.llm = get_peft_model(model.llm, lora_config)
+
+# 保存 LoRA adapter，而不是保存完整模型
+model.llm.save_pretrained("checkpoints/lora_adapter")</code></pre>
+          <div class="card">
+            <h3>LoRA 阶段的能力边界</h3>
+            <p>LoRA 主要改变语言表达风格，并不重新提升视觉识别能力。视觉理解能力主要来自 Stage 1 的模态对齐和 Stage 2 的指令微调。</p>
+            <ul class="check-list compact">
+              <li>部署时使用 <code>load_adapter</code> 同时加载多个 LoRA 目录。</li>
+              <li>默认助手调用 <code>disable_adapters()</code>，人格模式调用 <code>set_adapter()</code>。</li>
+              <li>adapter 体积远小于完整模型，便于保存、切换和复现实验。</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 11 Innovation -->
+    <section class="slide" id="innovation">
+      <div class="slide__inner">
+        <p class="eyebrow">11 / Innovation and Design Highlights</p>
+        <h2>本系统的创新点与完成度</h2>
+        <div class="test-grid">
+          <article class="test-card"><b>训练闭环完整</b><p>从 Stage 1 模态对齐、Stage 2 指令微调到 Stage 3 LoRA 适配，形成可解释、可复现的实验路线。</p></article>
+          <article class="test-card"><b>轻量化架构</b><p>使用 CLIP + 2 层 MLP + Qwen3-1.7B，在较小参数规模下实现可交互的视觉问答系统。</p></article>
+          <article class="test-card"><b>标签掩码精细</b><p>训练时只监督 assistant 回复，视觉 token、用户问题和 padding 全部屏蔽，任务目标更清晰。</p></article>
+          <article class="test-card"><b>多轮构造稳健</b><p>对话样本采用“完整前缀编码再取新增 token”的方式，避免模板和 BPE 边界造成错位。</p></article>
+          <article class="test-card"><b>人格切换低成本</b><p>LoRA adapter 独立保存，部署时可动态启用或关闭，不需要维护多份完整模型。</p></article>
+          <article class="test-card"><b>演示链路可访问</b><p>Gradio 服务提供图像上传、对话、二维码访问；本展示网站负责清晰呈现实验路线和系统闭环。</p></article>
+        </div>
+      </div>
+    </section>
+
+    <!-- 11 Inference -->
+    <section class="slide" id="inference">
+      <div class="slide__inner">
+        <p class="eyebrow">12 / Inference Pipeline</p>
+        <h2>系统推理流程</h2>
+        <div class="flow-grid">
+          <div class="flow-step"><b>1</b><span>用户上传图像并输入问题</span></div>
+          <div class="flow-step"><b>2</b><span>空问题时自动补全“请描述这张图片”</span></div>
+          <div class="flow-step"><b>3</b><span>根据下拉框启用或关闭 LoRA adapter</span></div>
+          <div class="flow-step"><b>4</b><span>历史对话写入 chat template</span></div>
+          <div class="flow-step"><b>5</b><span>图像变换为 224×224 标准输入</span></div>
+          <div class="flow-step"><b>6</b><span>模型生成回答并清洗特殊标记</span></div>
+        </div>
+        <pre class="wide-code"><code>gen_kwargs = {
+    "max_new_tokens": 256,
+    "repetition_penalty": 1.15,
+    "pad_token_id": tokenizer.pad_token_id or tokenizer.eos_token_id
+}</code></pre>
+        <div class="note-box">
+          <b>关键点：</b>推理阶段仍然复用训练时的图像预处理与 chat template。图片存在时拼接 visual_embeds 和 text_embeds；图片为空时退化为纯文本对话，保证系统不会因缺少图像直接中断。
+        </div>
+      </div>
+    </section>
+
+    <!-- 12 Deployment -->
+    <section class="slide" id="deployment">
+      <div class="slide__inner">
+        <p class="eyebrow">13 / System Deployment</p>
+        <h2>系统部署与演示链路</h2>
+        <div class="two-col">
+          <div class="card">
+            <h3>后端推理服务部署</h3>
+            <ul class="check-list compact">
+              <li>部署环境：Python + PyTorch + CUDA + Transformers + PEFT + Gradio。</li>
+              <li>启动前清理代理变量，避免网络访问干扰。</li>
+              <li>依次加载 CLIP、Qwen3-1.7B、Stage 2 权重和 LoRA adapter。</li>
+              <li>模型加载后设置为 eval 模式，进入 Gradio 交互服务。</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>前端交互页面</h3>
+            <ul class="check-list compact">
+              <li>图像输入：本地上传 / 相机拍摄。</li>
+              <li>文本输入：自然语言提问。</li>
+              <li>对话展示：显示多轮历史。</li>
+              <li>人格选择：切换不同 LoRA 权重。</li>
+              <li>二维码：移动端扫码访问。</li>
+            </ul>
+          </div>
+        </div>
+        <div class="terminal-card">
+          <span>$ python app.py --checkpoint checkpoints/stage2_llava_best.pt</span>
+          <span>清理代理变量 → 加载基础模型 → 注入 LoRA → 启动 Gradio → 生成二维码</span>
+        </div>
+        <div class="deploy-map">
+          <div><b>GPU 服务器</b><span>加载模型权重并执行推理</span></div>
+          <div><b>Gradio 服务</b><span>AutoDL服务器提供6006端口部署到公网提供交互页面</span></div>
+          <div><b>浏览器 / 手机</b><span>上传图片、提问、查看回答</span></div>
+          <div><b>展示网站</b><span>说明模型结构、实验流程和系统效果</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 13 Testing -->
+    <section class="slide" id="testing">
+      <div class="slide__inner">
+        <p class="eyebrow">14 / System Testing</p>
+        <h2>功能测试与展示重点</h2>
+        <div class="test-grid">
+          <article class="test-card"><b>图像描述</b><p>上传图像但不输入问题，系统自动使用默认提示词生成描述。</p></article>
+          <article class="test-card"><b>视觉问答</b><p>围绕图中主体、场景、动作和细节进行提问，验证模型回答相关性。</p></article>
+          <article class="test-card"><b>多轮对话</b><p>基于同一张图继续追问，验证历史对话状态管理。</p></article>
+          <article class="test-card"><b>人格切换</b><p>同一图像和问题下切换 adapter，对比不同语言风格。</p></article>
+          <article class="test-card"><b>相机上传</b><p>移动端或电脑端调用摄像头，拍摄现实场景并问答。</p></article>
+          <article class="test-card"><b>移动端访问</b><p>通过二维码进入页面，验证现场展示便利性。</p></article>
+        </div>
+        <div class="detail-grid">
+          <article><b>测试输入设计</b><span>选择人物、物体、场景和文字信息较丰富的图片，分别测试主体识别、细节理解和关系描述。</span></article>
+          <article><b>对比方式</b><span>同一图片先用默认助手回答，再切换 LoRA 人格，观察内容相关性是否保持、表达风格是否变化。</span></article>
+          <article><b>异常处理</b><span>空问题自动转为图像描述；无图片时支持纯文本对话，避免演示时因输入缺失中断。</span></article>
+        </div>
+      </div>
+    </section>
+
+    <!-- 14 Results Table -->
+    <section class="slide" id="results">
+      <div class="slide__inner">
+        <p class="eyebrow">15 / Training Results and Functions</p>
+        <h2>训练阶段与系统功能对应关系</h2>
+        <div class="chart-grid">
+          <article class="chart-card">
+            <div class="chart-head">
+              <h3>Stage 1 模态对齐 Loss 曲线</h3>
+              <span>Projection 收敛</span>
+            </div>
+            <svg class="line-chart" viewBox="0 0 520 260" role="img" aria-label="Stage 1 loss curve">
+              <line x1="54" y1="28" x2="54" y2="214"></line>
+              <line x1="54" y1="214" x2="492" y2="214"></line>
+              <polyline points="54,48 142,118 230,151 318,173 406,189 492,198"></polyline>
+              <g class="points">
+                <circle cx="54" cy="48" r="4"></circle><circle cx="142" cy="118" r="4"></circle><circle cx="230" cy="151" r="4"></circle>
+                <circle cx="318" cy="173" r="4"></circle><circle cx="406" cy="189" r="4"></circle><circle cx="492" cy="198" r="4"></circle>
+              </g>
+              <text x="54" y="236">0</text><text x="230" y="236">中期</text><text x="458" y="236">最终</text>
+              <text x="12" y="52">≈5.2</text><text x="10" y="202">1.57</text>
+            </svg>
+            <p>Stage 1 从随机 Projection 开始，训练初期 loss 下降较快，后期逐渐趋缓。最终 Eval Loss 约为 1.5723，说明视觉特征到语言嵌入空间的基础对齐已经形成。</p>
+          </article>
+          <article class="chart-card">
+            <div class="chart-head">
+              <h3>Stage 2 指令微调 Loss 曲线</h3>
+              <span>问答能力形成</span>
+            </div>
+            <svg class="line-chart stage2-line" viewBox="0 0 520 260" role="img" aria-label="Stage 2 loss curve">
+              <line x1="54" y1="28" x2="54" y2="214"></line>
+              <line x1="54" y1="214" x2="492" y2="214"></line>
+              <polyline points="54,62 142,104 230,142 318,168 406,184 492,191"></polyline>
+              <g class="points">
+                <circle cx="54" cy="62" r="4"></circle><circle cx="142" cy="104" r="4"></circle><circle cx="230" cy="142" r="4"></circle>
+                <circle cx="318" cy="168" r="4"></circle><circle cx="406" cy="184" r="4"></circle><circle cx="492" cy="191" r="4"></circle>
+              </g>
+              <text x="54" y="236">0</text><text x="230" y="236">中期</text><text x="458" y="236">最终</text>
+              <text x="12" y="66">≈3.4</text><text x="10" y="195">2.03</text>
+            </svg>
+            <p>Stage 2 任务包含开放式视觉问答和多轮对话，目标空间比 caption 更复杂。曲线下降后稳定在约 2.0270，表明模型已从描述能力扩展到图文指令跟随能力。</p>
+          </article>
+        </div>
+        <div class="chart-grid compact-charts">
+          <article class="chart-card">
+            <div class="chart-head">
+              <h3>Eval PPL 对比</h3>
+              <span>任务难度差异</span>
+            </div>
+            <div class="compare-bars">
+              <div><span>Stage 1</span><i style="--h: 56%"></i><b>4.8177</b></div>
+              <div><span>Stage 2</span><i style="--h: 88%"></i><b>7.5912</b></div>
+            </div>
+            <p>Stage 2 的 PPL 更高不是退化，而是任务从单一描述变成开放问答、多轮上下文和更长文本生成，评价时需要结合功能变化解释。</p>
+          </article>
+          <article class="chart-card">
+            <div class="chart-head">
+              <h3>阶段产物流转</h3>
+              <span>训练闭环</span>
+            </div>
+            <div class="artifact-flow">
+              <span>stage1_projection_best.pt</span>
+              <span>stage2_llava_best.pt</span>
+              <span>lora_adapter/</span>
+              <span>Gradio 推理服务</span>
+            </div>
+            <p>每一阶段的输出都会成为下一阶段的输入或部署资产，形成从模态对齐、指令微调到人格适配的连续实验链路。</p>
+          </article>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>阶段</th><th>训练策略</th><th>主要结果</th><th>支撑功能</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Stage 1</td><td>冻结 CLIP 与 LLM，仅训练 Projection</td><td>Eval Loss ≈ 1.5723，Eval PPL ≈ 4.8177</td><td>图像描述、视觉语义映射</td></tr>
+              <tr><td>Stage 2</td><td>冻结 CLIP，训练 Projection + LLM</td><td>Eval Loss ≈ 2.0270，Eval PPL ≈ 7.5912</td><td>视觉问答、多轮对话</td></tr>
+              <tr><td>Stage 3</td><td>基于 Stage 2 注入 LoRA adapter</td><td>不显著破坏基础问答能力，实现风格扩展</td><td>人格切换、风格化回复</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="hint">说明：不同阶段任务难度不同，loss / ppl 不适合简单横向比较，应结合系统功能进行解释。</p>
+        <div class="detail-grid">
+          <div class="card">
+            <h3>结果解释</h3>
+            <p>Stage 1 的任务较集中，主要学习图像描述，指标更低；Stage 2 的任务包含开放问答与多轮对话，语言空间更复杂，因此指标上升但交互能力增强。</p>
+          </div>
+          <div class="card">
+            <h3>功能落点</h3>
+            <p>Stage 1 对应图像语义接入，Stage 2 对应视觉问答与多轮交互，Stage 3 对应低成本语言风格扩展，三者共同支撑最终系统。</p>
+          </div>
+          <div class="card">
+            <h3>实验完整性</h3>
+            <p>实验覆盖数据处理、训练策略、权重保存、推理加载、Web 交互和功能测试，能够说明系统不是单点模型调用，而是完整工程实现。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 16 Ending -->
+    <section class="slide ending" id="ending">
+      <div class="slide__inner">
+        <p class="eyebrow">Thank You</p>
+        <h2>谢谢各位老师的批评与指正</h2>
+        <p class="subtitle">Mini-LLaVA 智能视觉对话系统完成了图像输入、视觉特征提取、跨模态映射、语言生成、LoRA 风格适配和 Web 端展示。</p>
+        <a class="btn primary" href="#cover">返回首页</a>
+      </div>
+    </section>
+  </main>
+
+  <div class="slide-controls" aria-label="幻灯片控制">
+    <button id="prevBtn" aria-label="上一页">↑</button>
+    <button id="nextBtn" aria-label="下一页">↓</button>
+  </div>
+
+  <script src="assets/js/app.js"></script>
+</body>
+</html>
